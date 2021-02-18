@@ -1,12 +1,12 @@
 # What is this?
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-<a href="https://packagist.org/packages/dpc/guzzle-client"><img src="https://poser.pugx.org/dpc/guzzle-client/v/stable.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/udhuong/guzzle-client"><img src="https://poser.pugx.org/udhuong/guzzle-client/v/stable.svg" alt="Latest Stable Version"></a>
 
 A Simple Guzzle Client for a Laravel application
 
 # Requirements
-* PHP 7.2 or higher
-* Laravel 6 
+* PHP 7.1 or higher
+* Laravel 5.5 or 5.6
 
 # Installation
 Via composer
@@ -34,34 +34,56 @@ public function __construct(RequestClientContract $client)
 You can then use the client by first calling make, to set the base URI - and then populating the request.
 The client returns a normal PSR ResponseInterface. This means you interact with the response as you would with any Guzzle response.
 ```php
-$client = $this->client->make('https://httpbin.org/');
+$client = $this->client
+    ->make('http://api.example.abc/')
+    ->withParamDefault([
+        'agent' => [
+            'device'     => detectDevice()->deviceType(),
+            'platform'   => detectDevice()->platform(),
+            'browser'    => detectDevice()->browser(),
+            'ip'         => request()->ip(),
+            'meta_agent' => detectDevice()->getUserAgent(),
+        ],
+    
+    ])
+    ->withHeaders([
+        'token_master' => config('api.token_master')
+    ]);
 
-$client->to('get')->withBody([
-	'foo' => 'bar'
-])->withHeaders([
-	'baz' => 'qux'
-])->withOptions([
-	'allow_redirects' => false
-])->asJson()->get();
+$response = $client
+    ->to('feed')
+    ->asQuery()
+    ->withBody([
+        'foo' => 'bar'
+    ])
+    ->get();
 
 echo $response->getBody();
+echo json_decode($response, true);
 echo $response->getStatusCode();
 ```
 
 Alternatively, you can include both the body, headers and options in a single call.
 
 ```php
-$client = $this->client->make('https://httpbin.org/');
-
-$response = $client->to('get')->with([
-    'foo' => 'bar'
-], [
-    'baz' => 'qux'
-], [
-    'allow_redirects' => false
-])->asFormParams()->get();
+$response = $client
+    ->to('get')
+    ->with(
+        [//body
+            'foo' => 'bar'
+        ], 
+        [//headers
+            'baz' => 'qux'
+        ], 
+        [//options
+            'allow_redirects' => false
+        ]
+    )
+    ->asFormParams()
+    ->get();
 
 echo $response->getBody();
+echo json_decode($response, true);
 echo $response->getStatusCode();
 ```
 
@@ -69,32 +91,7 @@ The `asJson()` method will send the data using `json` key in the Guzzle request.
 
 # Available methods / Example Usage
 ```php
-$client = $this->client->make('https://httpbin.org/');
-
-//Get data
-public function search($params)
-{
-    $response = $client
-        ->to('feed-search')
-        ->withBody($params)
-        ->request('get')
-        ->getBody();
-
-    return json_decode($response, true);
-}
-
-//Store
-public function store($params)
-{
-    $response = $client
-        ->to('feed/store')
-        ->asMultipart()
-        ->withBody($params)
-        ->request('post')
-        ->getBody();
-
-    return json_decode($response, true);
-}
+$client = $this->client->make('http://api.example.abc/');
 
 // Get request
 $response = $client->to('brotli')->get();
@@ -139,6 +136,27 @@ $response = $client->to('redirect/5')->withOptions([
 $response = $client->to('post')->withBody([
 	'foo' => 'bar'
 ])->asJson()->request('post');
+
+//Add param default
+$response = $client->to('post')->withParamDefault([
+    'agent' => [
+        'device'     => detectDevice()->deviceType(),
+        'platform'   => detectDevice()->platform(),
+        'browser'    => detectDevice()->browser(),
+        'ip'         => request()->ip(),
+        'meta_agent' => detectDevice()->getUserAgent(),
+    ]
+])->get();
+
+//To upload file
+$params = [
+    'file' => $request->file('file')
+];
+$response = $client
+    ->to('feed/store')
+    ->asMultipart()
+    ->withBody($params)
+    ->post();
 ```
 
 # Debugging
