@@ -5,8 +5,8 @@
 A Simple Guzzle Client for a Laravel application
 
 # Requirements
-* PHP 7.1 or higher
-* Laravel 5.5 or 5.6 
+* PHP 7.2 or higher
+* Laravel 6 
 
 # Installation
 Via composer
