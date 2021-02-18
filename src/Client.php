@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Dpc\GuzzleClient;
+namespace UDHuong\GuzzleClient;
 
 use GuzzleHttp\Client as GuzzleClient;
+use Illuminate\Http\UploadedFile;
 use Psr\Http\Message\ResponseInterface;
 
 class Client implements RequestInterface
@@ -23,8 +24,11 @@ class Client implements RequestInterface
     /** @var null|array */
     protected $options;
 
+    /** @var null|array */
+    protected $paramDefault;
+
     /** @var string */
-    protected $format = 'json';
+    protected $format = 'query';
 
     /** @var bool|resource */
     protected $debug = false;
@@ -41,9 +45,11 @@ class Client implements RequestInterface
      * Create a new Guzzle Client specifying the Base URI.
      *
      * @param string $base_uri
+     *
      * @return RequestInterface
      */
-    public function make(string $base_uri): RequestInterface
+    public function make(string $base_uri)
+    : RequestInterface
     {
         $this->client = new GuzzleClient(['base_uri' => $base_uri]);
 
@@ -54,9 +60,11 @@ class Client implements RequestInterface
      * Specify the URI for the Request.
      *
      * @param string $uri
+     *
      * @return RequestInterface
      */
-    public function to(string $uri): RequestInterface
+    public function to(string $uri)
+    : RequestInterface
     {
         $this->uri = $uri;
 
@@ -69,11 +77,13 @@ class Client implements RequestInterface
      * @param array|null $body
      * @param array|null $headers
      * @param array|null $options
+     *
      * @return RequestInterface
      */
-    public function with(?array $body = null, ?array $headers = null, ?array $options = null): RequestInterface
+    public function with(?array $body = null, ?array $headers = null, ?array $options = null)
+    : RequestInterface
     {
-        $this->body = $body;
+        $this->body    = $body;
         $this->headers = $headers;
         $this->options = $options;
 
@@ -84,9 +94,11 @@ class Client implements RequestInterface
      * Specify the body for the request.
      *
      * @param array|null $body
+     *
      * @return RequestInterface
      */
-    public function withBody(?array $body = null): RequestInterface
+    public function withBody(?array $body = null)
+    : RequestInterface
     {
         $this->body = $body;
 
@@ -97,9 +109,11 @@ class Client implements RequestInterface
      * Specify the headers for the request.
      *
      * @param array|null $headers
+     *
      * @return RequestInterface
      */
-    public function withHeaders(?array $headers = null): RequestInterface
+    public function withHeaders(?array $headers = null)
+    : RequestInterface
     {
         $this->headers = $headers;
 
@@ -110,11 +124,28 @@ class Client implements RequestInterface
      * Specify the options for the request.
      *
      * @param array|null $options
+     *
      * @return RequestInterface
      */
-    public function withOptions(?array $options = null): RequestInterface
+    public function withOptions(?array $options = null)
+    : RequestInterface
     {
         $this->options = $options;
+
+        return $this;
+    }
+
+    /**
+     * Specify the param default for the request.
+     *
+     * @param array|null $paramDefault
+     *
+     * @return RequestInterface
+     */
+    public function withParamDefault(?array $paramDefault = null)
+    : RequestInterface
+    {
+        $this->paramDefault = $paramDefault;
 
         return $this;
     }
@@ -124,7 +155,8 @@ class Client implements RequestInterface
      *
      * @return RequestInterface
      */
-    public function asFormParams(): RequestInterface
+    public function asFormParams()
+    : RequestInterface
     {
         $this->format = 'form_params';
 
@@ -136,9 +168,36 @@ class Client implements RequestInterface
      *
      * @return RequestInterface
      */
-    public function asJson(): RequestInterface
+    public function asJson()
+    : RequestInterface
     {
         $this->format = 'json';
+
+        return $this;
+    }
+
+    /**
+     * Specify the body to be query.
+     *
+     * @return RequestInterface
+     */
+    public function asQuery()
+    : RequestInterface
+    {
+        $this->format = 'query';
+
+        return $this;
+    }
+
+    /**
+     * Specify the body to be multipart.
+     *
+     * @return RequestInterface
+     */
+    public function asMultipart()
+    : RequestInterface
+    {
+        $this->format = 'multipart';
 
         return $this;
     }
@@ -147,9 +206,11 @@ class Client implements RequestInterface
      * Toggle debugging.
      *
      * @param bool $debug
+     *
      * @return $this
      */
-    public function debug($debug = true): RequestInterface
+    public function debug($debug = true)
+    : RequestInterface
     {
         $this->debug = $debug;
 
@@ -161,7 +222,8 @@ class Client implements RequestInterface
      *
      * @return ResponseInterface
      */
-    public function get(): ResponseInterface
+    public function get()
+    : ResponseInterface
     {
         return $this->makeRequest();
     }
@@ -171,7 +233,8 @@ class Client implements RequestInterface
      *
      * @return ResponseInterface
      */
-    public function post(): ResponseInterface
+    public function post()
+    : ResponseInterface
     {
         return $this->makeRequest('POST');
     }
@@ -181,7 +244,8 @@ class Client implements RequestInterface
      *
      * @return ResponseInterface
      */
-    public function put(): ResponseInterface
+    public function put()
+    : ResponseInterface
     {
         return $this->makeRequest('PUT');
     }
@@ -191,7 +255,8 @@ class Client implements RequestInterface
      *
      * @return ResponseInterface
      */
-    public function patch(): ResponseInterface
+    public function patch()
+    : ResponseInterface
     {
         return $this->makeRequest('PATCH');
     }
@@ -201,19 +266,23 @@ class Client implements RequestInterface
      *
      * @return ResponseInterface
      */
-    public function delete(): ResponseInterface
+    public function delete()
+    : ResponseInterface
     {
         return $this->makeRequest('DELETE');
     }
-    
+
     /**
      * @param string $method
+     *
      * @return ResponseInterface
      * @throws \InvalidArgumentException
      */
-    public function request(string $method): ResponseInterface
+    public function request(string $method)
+    : ResponseInterface
     {
-        if (!in_array(strtolower($method), ['get', 'post', 'put', 'patch', 'delete'])) {
+        if (!in_array(strtolower($method), ['get', 'post', 'put', 'patch', 'delete']))
+        {
             throw new \InvalidArgumentException('The specified method must be either GET, POST, PUT, PATCH or DELETE');
         }
 
@@ -224,24 +293,77 @@ class Client implements RequestInterface
      * Sends the request.
      *
      * @param string $method
+     *
      * @return ResponseInterface
      */
-    private function makeRequest(string $method = 'GET'): ResponseInterface
+    private function makeRequest(string $method = 'GET')
+    : ResponseInterface
     {
+        if ($this->paramDefault !== null)
+        {
+            $this->body = array_merge($this->body, $this->paramDefault);
+        }
+        if ($this->format === 'multipart')
+        {
+            $this->body = $this->flatten($this->body);
+        }
         $requestParameters = [
             $this->format => $this->body,
-            'headers' => $this->headers,
-            'debug' => $this->debug
+            'headers'     => $this->headers,
+            'debug'       => $this->debug
         ];
-
-        if ($this->options !== null) {
+        if ($this->options !== null)
+        {
             $requestParameters = array_merge($requestParameters, $this->options);
         }
-
         $response = $this->client->request($method, $this->uri, $requestParameters);
 
         $this->debug = false;
 
         return $response;
+    }
+
+    /**
+     * Used for turning an array into a PHP friendly name.
+     *
+     * @param array  $array
+     * @param string $prefix
+     * @param string $suffix
+     *
+     * @return array
+     */
+    private function flatten(array $array, string $prefix = '', string $suffix = '')
+    : array
+    {
+        $result = [];
+
+        foreach ($array as $key => $value)
+        {
+            if (is_array($value))
+            {
+                $result = array_merge($result, $this->flatten($value, $prefix . $key . $suffix . '[', ']'));
+            }
+            else
+            {
+                if ($value instanceof UploadedFile)
+                {
+                    $result[] = [
+                        'name'      => $prefix . $key . $suffix,
+                        'filename'  => $value->getClientOriginalName(),
+                        'Mime-Type' => $value->getClientMimeType(),
+                        'contents'  => file_get_contents($value->getPathname()),
+                    ];
+                }
+                else
+                {
+                    $result[] = [
+                        'name'     => $prefix . $key . $suffix,
+                        'contents' => $value,
+                    ];
+                }
+            }
+        }
+
+        return $result;
     }
 }

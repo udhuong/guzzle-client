@@ -1,6 +1,6 @@
 <?php
 
-use Dpc\GuzzleClient\Client as GuzzleClient;
+use UDHuong\GuzzleClient\Client as GuzzleClient;
 use PHPUnit\Framework\TestCase;
 
 class GuzzleClientTest extends TestCase
@@ -29,7 +29,7 @@ class GuzzleClientTest extends TestCase
             ],
         ], (array)json_decode($response, true));
     }
-    
+
     /** @test */
     function a_valid_request_is_working()
     {

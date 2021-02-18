@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Dpc\GuzzleClient;
+namespace UDHuong\GuzzleClient;
 
 use Illuminate\Support\ServiceProvider;
 
